@@ -10,6 +10,17 @@
 
 #include <JuceHeader.h>
 
+
+struct ChainSettings
+{
+	float peakFreq{ 0 }, peakGain{ 0 }, peakQ{ 1.f };
+	float loCutFreq{ 0 }, hiCutFreq{ 0 };
+	int   loCutSlope{ 0 }, hiCutSlope{ 0 };
+};
+
+
+ChainSettings  getChainSettings(juce::AudioProcessorValueTreeState& apvts);
+
 //==============================================================================
 /**
 */
@@ -57,7 +68,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 	static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-	juce::AudioProcessorValueTreeState apvts{ *this, nullptr, "Parameters", createParameterLayout()};  // AudioProcessor &processorToConnectTo, UndoManager *undoManagerToUse, const Identifier &ValueTreeType,  ParameterLayout parameterLayout }; 
+	juce::AudioProcessorValueTreeState apvts { *this, nullptr, "Parameters", createParameterLayout()};  // AudioProcessor &processorToConnectTo, UndoManager *undoManagerToUse, const Identifier &ValueTreeType,  ParameterLayout parameterLayout }; 
 
 private:
 
@@ -68,6 +79,14 @@ private:
 	using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
 
 	MonoChain leftChain, rightChain;
+
+	enum ChainPositions
+	{
+		LoCut,
+		Peak,
+		HiCut
+	};
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Simple_eqAudioProcessor)

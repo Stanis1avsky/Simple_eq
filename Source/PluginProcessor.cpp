@@ -90,6 +90,23 @@ void Simple_eqAudioProcessor::changeProgramName (int index, const juce::String& 
 {
 }
 
+
+
+ChainSettings  getChainSettings(juce::AudioProcessorValueTreeState& apvts)
+{
+	ChainSettings  settings;
+
+	settings.hiCutFreq = apvts.getRawParameterValue("HiCut Freq")->load();
+	settings.loCutFreq = apvts.getRawParameterValue("LoCut Freq")->load();
+	settings.hiCutSlope = apvts.getRawParameterValue("HiCut Slope")->load();
+	settings.loCutSlope = apvts.getRawParameterValue("LoCut Slope")->load();
+	settings.peakFreq = apvts.getRawParameterValue("Peak Freq")->load();
+	settings.peakGain = apvts.getRawParameterValue("Peak Gain")->load();
+	settings.peakQ = apvts.getRawParameterValue("Peak Q")->load();
+
+	return settings;
+}
+
 //==============================================================================
 void Simple_eqAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -104,6 +121,13 @@ void Simple_eqAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
 	leftChain.prepare(spec);
 	rightChain.prepare(spec);
+
+	auto chainSettings = getChainSettings(apvts);
+
+	auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQ, juce::Decibels::decibelsToGain(chainSettings.peakGain));
+
+	*leftChain.get<ChainPositions::Peak>().coefficients  = *peakCoefficients;
+    *rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
 }
 
 void Simple_eqAudioProcessor::releaseResources()
@@ -166,6 +190,13 @@ void Simple_eqAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     ////////////    // ..do something to the data...
     ////////////}
 
+	auto chainSettings = getChainSettings(apvts);
+
+	auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQ, juce::Decibels::decibelsToGain(chainSettings.peakGain));
+
+	*leftChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+	*rightChain.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+
 	juce::dsp::AudioBlock<float> block(buffer);
 
 	auto leftBlock  = block.getSingleChannelBlock(0);
@@ -204,6 +235,9 @@ void Simple_eqAudioProcessor::setStateInformation (const void* data, int sizeInB
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
+
+
+
 
 
 juce::AudioProcessorValueTreeState::ParameterLayout Simple_eqAudioProcessor::createParameterLayout()
