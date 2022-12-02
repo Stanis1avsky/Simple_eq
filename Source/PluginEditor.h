@@ -40,7 +40,24 @@ private:
     Simple_eqAudioProcessor& audioProcessor;
 
 
-	CustomRotarySlider  peakFreqSlider, peakGainSlider, peakQSlider, loCutFreqSlider, hiCutFreqSlider, loCutSlopeSlider, hiCutSlopeSlider;
+	CustomRotarySlider  peakFreqSlider, 
+		                peakGainSlider, 
+		                peakQSlider, 
+		                loCutFreqSlider, 
+		                hiCutFreqSlider, 
+		                loCutSlopeSlider, 
+		                hiCutSlopeSlider;
+
+	using APVTS = juce::AudioProcessorValueTreeState;
+	using Attachment = APVTS::SliderAttachment;
+
+	Attachment  peakFreqSliderAttachment,
+				peakGainSliderAttachment,
+				peakQSliderAttachment,
+				loCutFreqSliderAttachment,
+				hiCutFreqSliderAttachment,
+				loCutSlopeSliderAttachment,
+				hiCutSlopeSliderAttachment;
 
 	std::vector<juce::Component*> getComps();
 
