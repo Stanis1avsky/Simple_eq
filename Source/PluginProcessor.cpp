@@ -115,15 +115,22 @@ void Simple_eqAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
 	updatePeakFilter(chainSettings);
 
-	auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.loCutFreq, sampleRate, (chainSettings.loCutSlope+1)*2);
+	auto loCutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.loCutFreq, sampleRate, (chainSettings.loCutSlope+1)*2);
 
 	auto& leftLoCut  = leftChain.get<ChainPositions::LoCut>();
 
-	updateCutFilter(leftLoCut, cutCoefficients, chainSettings.loCutSlope);
+	updateCutFilter(leftLoCut, loCutCoefficients, chainSettings.loCutSlope);
 
 	auto& rightLoCut = rightChain.get<ChainPositions::LoCut>();
 
-	updateCutFilter(rightLoCut, cutCoefficients, chainSettings.loCutSlope);
+	updateCutFilter(rightLoCut, loCutCoefficients, chainSettings.loCutSlope);
+
+
+	auto hiCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.hiCutFreq, sampleRate, (chainSettings.hiCutSlope + 1) * 2);
+	auto& leftHiCut = leftChain.get<ChainPositions::HiCut>();
+	auto& rightHiCut = rightChain.get<ChainPositions::HiCut>();
+	updateCutFilter(leftHiCut, hiCutCoefficients, chainSettings.hiCutSlope);
+	updateCutFilter(rightHiCut, hiCutCoefficients, chainSettings.hiCutSlope);
 
 }
 
@@ -202,6 +209,11 @@ void Simple_eqAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 
 	updateCutFilter(rightLoCut, cutCoefficients, chainSettings.loCutSlope);
 
+	auto hiCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.hiCutFreq, getSampleRate(), (chainSettings.hiCutSlope + 1) * 2);
+	auto& leftHiCut = leftChain.get<ChainPositions::HiCut>();
+	auto& rightHiCut = rightChain.get<ChainPositions::HiCut>();
+	updateCutFilter(leftHiCut, hiCutCoefficients, chainSettings.hiCutSlope);
+	updateCutFilter(rightHiCut, hiCutCoefficients, chainSettings.hiCutSlope);
 
 
 	juce::dsp::AudioBlock<float> block(buffer);
