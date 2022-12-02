@@ -246,15 +246,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout Simple_eqAudioProcessor::cre
 
 	layout.add(std::make_unique<juce::AudioParameterFloat>("LoCut Freq", 
 		                                                   "LoCut Freq", 
-		                                                   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f), 
+		                                                   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f), 
 		                                                   20.f));
 	layout.add(std::make_unique<juce::AudioParameterFloat>("HiCut Freq",
 														   "HiCut Freq",
-														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
+														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
 														   20000.f));
 	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Freq",
 														   "Peak Freq",
-														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 1.f),
+														   juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.25f),
 														   750.f));
 	layout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain",
 														   "Peak Gain",
