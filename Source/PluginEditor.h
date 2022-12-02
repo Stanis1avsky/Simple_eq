@@ -54,12 +54,15 @@ private:
 	Attachment  peakFreqSliderAttachment,
 				peakGainSliderAttachment,
 				peakQSliderAttachment,
-				loCutFreqSliderAttachment,
+	    		loCutFreqSliderAttachment,
 				hiCutFreqSliderAttachment,
 				loCutSlopeSliderAttachment,
 				hiCutSlopeSliderAttachment;
 
 	std::vector<juce::Component*> getComps();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Simple_eqAudioProcessorEditor)
+	MonoChain monoChain;
+
+
+   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Simple_eqAudioProcessorEditor)
 };
