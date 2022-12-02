@@ -57,7 +57,7 @@ private:
 	    		loCutFreqSliderAttachment,
 				hiCutFreqSliderAttachment,
 				loCutSlopeSliderAttachment,
-				hiCutSlopeSliderAttachment;
+				hiCutSlopeSliderAttachment; 
 
 	std::vector<juce::Component*> getComps();
 
