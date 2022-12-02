@@ -101,6 +101,15 @@ private:
 	using Coefficients = Filter::CoefficientsPtr;
 	void updateCoefficients(Coefficients &old, const Coefficients &replacements);
 
+
+	template<int Index, typename ChainType, typename CoefficientType>
+	void update(ChainType& chain, CoefficientType& coefficients)
+	{
+      updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
+	  chain.template setBypassed<Index>(false);
+	}
+
+
 	template<typename ChainType, typename CoefficientType>
 	void updateCutFilter(ChainType& leftLoCut, const CoefficientType&  cutCoefficients, const int loCutSlope)    //const ChainSettings& chainSettings)
 	{
@@ -112,42 +121,14 @@ private:
 
 		switch (loCutSlope)
 		{
-		case Slope_12:
-		{
-			*leftLoCut.template get<0>().coefficients = *cutCoefficients[0];
-			leftLoCut.template setBypassed<0>(false);
-			break;
-		}
-		case Slope_24:
-		{
-			*leftLoCut.template get<0>().coefficients = *cutCoefficients[0];
-			leftLoCut.template setBypassed<0>(false);
-			*leftLoCut.template get<1>().coefficients = *cutCoefficients[1];
-			leftLoCut.template setBypassed<1>(false);
-			break;
-		}
-		case Slope_36:
-		{
-			*leftLoCut.template get<0>().coefficients = *cutCoefficients[0];
-			leftLoCut.template setBypassed<0>(false);
-			*leftLoCut.template get<1>().coefficients = *cutCoefficients[1];
-			leftLoCut.template setBypassed<1>(false);
-			*leftLoCut.template get<2>().coefficients = *cutCoefficients[2];
-			leftLoCut.template setBypassed<2>(false);
-			break;
-		}
-		case Slope_48:
-		{
-			*leftLoCut.template get<0>().coefficients = *cutCoefficients[0];
-			leftLoCut.template setBypassed<0>(false);
-			*leftLoCut.template get<1>().coefficients = *cutCoefficients[1];
-			leftLoCut.template setBypassed<1>(false);
-			*leftLoCut.template get<2>().coefficients = *cutCoefficients[2];
-			leftLoCut.template setBypassed<2>(false);
-			*leftLoCut.template get<3>().coefficients = *cutCoefficients[3];
-			leftLoCut.template setBypassed<3>(false);
-			break;
-		}
+			case Slope_48:
+				update<3>(leftLoCut, cutCoefficients);
+			case Slope_36:
+				update<2>(leftLoCut, cutCoefficients);
+			case Slope_24:
+				update<1>(leftLoCut, cutCoefficients);
+			case Slope_12:
+				update<0>(leftLoCut, cutCoefficients);
 		}
 
 	}

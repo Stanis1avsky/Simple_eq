@@ -203,6 +203,7 @@ void Simple_eqAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 	updateCutFilter(rightLoCut, cutCoefficients, chainSettings.loCutSlope);
 
 
+
 	juce::dsp::AudioBlock<float> block(buffer);
 
 	auto leftBlock  = block.getSingleChannelBlock(0);
