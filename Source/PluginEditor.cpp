@@ -163,6 +163,12 @@ void Simple_eqAudioProcessorEditor::timerCallback()
 		auto chainSettings = getChainSettings(audioProcessor.apvts);
 		auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
 		updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients,peakCoefficients);  
+
+		auto loCutCoefficients = makeLoCutFilter(chainSettings, audioProcessor.getSampleRate());
+		auto hiCutCoefficients = makeHiCutFilter(chainSettings, audioProcessor.getSampleRate());
+        updateCutFilter(monoChain.get<ChainPositions::LoCut>(), loCutCoefficients, chainSettings.loCutSlope);
+		updateCutFilter(monoChain.get<ChainPositions::HiCut>(), hiCutCoefficients, chainSettings.hiCutSlope);
+
       // signal a repaint
 		repaint();
 	}
