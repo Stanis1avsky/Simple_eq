@@ -49,6 +49,55 @@ void updateCoefficients(Coefficients &old, const Coefficients &replacements);
 
 Coefficients makePeakFilter(const ChainSettings& chainSettings, double sampleRate);
 
+
+
+template<int Index, typename ChainType, typename CoefficientType>
+void update(ChainType& chain, CoefficientType& coefficients)
+{
+	updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
+	chain.template setBypassed<Index>(false);
+}
+
+
+template<typename ChainType, typename CoefficientType>
+void updateCutFilter(ChainType& leftLoCut, const CoefficientType&  cutCoefficients, const int loCutSlope)    //const ChainSettings& chainSettings)
+{
+
+	leftLoCut.template setBypassed<0>(true);
+	leftLoCut.template setBypassed<1>(true);
+	leftLoCut.template setBypassed<2>(true);
+	leftLoCut.template setBypassed<3>(true);
+
+	switch (loCutSlope)
+	{
+	case Slope_48:
+		update<3>(leftLoCut, cutCoefficients);
+	case Slope_36:
+		update<2>(leftLoCut, cutCoefficients);
+	case Slope_24:
+		update<1>(leftLoCut, cutCoefficients);
+	case Slope_12:
+		update<0>(leftLoCut, cutCoefficients);
+	}
+
+}
+
+
+inline auto makeLoCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+	return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.loCutFreq, 
+		sampleRate, 
+		(chainSettings.loCutSlope + 1) * 2);
+}
+
+inline auto makeHiCutFilter(const ChainSettings& chainSettings, double sampleRate)
+{
+	return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.hiCutFreq,
+		sampleRate,
+		(chainSettings.hiCutSlope + 1) * 2);
+}
+
+
 //==============================================================================
 /**
 */
@@ -104,36 +153,7 @@ private:
 
 	void updatePeakFilter(const ChainSettings chainSettings);
 
-	template<int Index, typename ChainType, typename CoefficientType>
-	void update(ChainType& chain, CoefficientType& coefficients)
-	{
-      updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
-	  chain.template setBypassed<Index>(false);
-	}
 
-
-	template<typename ChainType, typename CoefficientType>
-	void updateCutFilter(ChainType& leftLoCut, const CoefficientType&  cutCoefficients, const int loCutSlope)    //const ChainSettings& chainSettings)
-	{
-
-		leftLoCut.template setBypassed<0>(true);
-		leftLoCut.template setBypassed<1>(true);
-		leftLoCut.template setBypassed<2>(true);
-		leftLoCut.template setBypassed<3>(true);
-
-		switch (loCutSlope)
-		{
-			case Slope_48:
-				update<3>(leftLoCut, cutCoefficients);
-			case Slope_36:
-				update<2>(leftLoCut, cutCoefficients);
-			case Slope_24:
-				update<1>(leftLoCut, cutCoefficients);
-			case Slope_12:
-				update<0>(leftLoCut, cutCoefficients);
-		}
-
-	}
 
 
 
