@@ -88,11 +88,36 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 										sliderBounds.getWidth(), 
 										sliderBounds.getHeight(),
 										jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), 
-										startAng, 
+					  					startAng, 
 										endAng, 
 										*this);
 
 
+	auto center = getSliderBounds().toFloat().getCentre();
+	auto radius = getSliderBounds().getWidth()*0.5f;
+
+	g.setColour(juce::Colour(0u, 172u, 1u));
+	g.setFont(getTextHeight());
+
+	auto numChoices = labels.size();
+
+	for (int i = 0; i < numChoices; i++)
+	{
+		auto pos = labels[i].pos;
+		jassert(0.f <= pos);
+		jassert(1.f >= pos);
+		auto ang = jmap(pos, 0.f, 1.f, startAng, endAng);
+
+		auto c = center.getPointOnCircumference(radius + getTextHeight()*0.5f + 1, ang);
+
+		Rectangle<float> r;
+		auto str = labels[i].label;
+		r.setSize(g.getCurrentFont().getStringWidth(str), getTextBoxHeight());
+		r.setCentre(c);
+		r.setY(r.getY() + getTextHeight());
+
+		g.drawFittedText(str, r.toNearestInt(), juce::Justification::centred, 1);
+	}
 }
 
 
@@ -302,6 +327,9 @@ Simple_eqAudioProcessorEditor::Simple_eqAudioProcessorEditor (Simple_eqAudioProc
 	loCutSlopeSliderAttachment(audioProcessor.apvts, "LoCut Slope", loCutSlopeSlider),
 	hiCutSlopeSliderAttachment(audioProcessor.apvts, "HiCut Slope", hiCutSlopeSlider)
 {
+
+	peakFreqSlider.labels.add({ 0.f, "20Hz" });
+	peakFreqSlider.labels.add({ 1.f, "20kHz" });
 
 	for (auto comp : getComps())
 	{
