@@ -27,6 +27,26 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
   g.setColour(Colour(255u, 154u, 1u));
   g.drawEllipse(bounds, 1.f);
+
+  auto center = bounds.getCentre();
+
+  Path p;
+  Rectangle<float> r;
+
+  r.setLeft(center.getX() - 2);
+  r.setRight(center.getX() + 2);
+  r.setTop(bounds.getY());
+  r.setBottom(center.getY());
+
+  p.addRectangle(r);
+
+  jassert(rotaryStartAngle < rotaryEndAngle);
+
+  auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+
+  p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
+
+  g.fillPath(p);
 }
 
 void RotarySliderWithLabels::paint(juce::Graphics& g)
@@ -39,15 +59,35 @@ void RotarySliderWithLabels::paint(juce::Graphics& g)
 	auto range = getRange();
 	auto sliderBounds = getSliderBounds();
 
-	getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(),
-		jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAng, endAng, *this);
+	g.setColour(juce::Colours::red);
+	g.drawRect(getLocalBounds());
+	g.setColour(juce::Colours::yellow);
+	g.drawRect(sliderBounds);
+
+	getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), 
+										sliderBounds.getY(), 
+										sliderBounds.getWidth(), 
+										sliderBounds.getHeight(),
+										jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), 
+										startAng, 
+										endAng, 
+										*this);
+
+
 }
 
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
 {
-	return getLocalBounds();
-}
+	auto bounds =  getLocalBounds();
+	auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
+	size -= getTextHeight() * 2;
+	juce::Rectangle<int> r;
+	r.setSize(size, size);
+	r.setCentre(bounds.getCentreX(), 0);
+	r.setY(2);
+	return r;
+} 
 
 
 
