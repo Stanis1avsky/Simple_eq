@@ -182,6 +182,7 @@ ResponseCurveComponent::ResponseCurveComponent(Simple_eqAudioProcessor& p) : aud
 		param->addListener(this);
 	}
 
+	updateChain();
 	startTimerHz(60);
 }
 
@@ -208,31 +209,50 @@ void ResponseCurveComponent::timerCallback()
 	if (parametersChanged.compareAndSetBool(false, true))
 	{
 		//DBG("params changed");
-	  // update the monochain
-		auto chainSettings = getChainSettings(audioProcessor.apvts);
-		auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-		updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+	 // // update the monochain
+		//auto chainSettings = getChainSettings(audioProcessor.apvts);
+		//auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+		//updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
 
-		auto loCutCoefficients = makeLoCutFilter(chainSettings, audioProcessor.getSampleRate());
-		auto hiCutCoefficients = makeHiCutFilter(chainSettings, audioProcessor.getSampleRate());
-		updateCutFilter(monoChain.get<ChainPositions::LoCut>(), loCutCoefficients, chainSettings.loCutSlope);
-		updateCutFilter(monoChain.get<ChainPositions::HiCut>(), hiCutCoefficients, chainSettings.hiCutSlope);
+		//auto loCutCoefficients = makeLoCutFilter(chainSettings, audioProcessor.getSampleRate());
+		//auto hiCutCoefficients = makeHiCutFilter(chainSettings, audioProcessor.getSampleRate());
+		//updateCutFilter(monoChain.get<ChainPositions::LoCut>(), loCutCoefficients, chainSettings.loCutSlope);
+		//updateCutFilter(monoChain.get<ChainPositions::HiCut>(), hiCutCoefficients, chainSettings.hiCutSlope);
 
-		// signal a repaint
+		updateChain();
+
+		//// signal a repaint
 		repaint();
 	}
 }
 
 
 
+void ResponseCurveComponent::updateChain()
+{
+	// update the monochain
+	auto chainSettings = getChainSettings(audioProcessor.apvts);
+	auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+	updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+
+	auto loCutCoefficients = makeLoCutFilter(chainSettings, audioProcessor.getSampleRate());
+	auto hiCutCoefficients = makeHiCutFilter(chainSettings, audioProcessor.getSampleRate());
+	updateCutFilter(monoChain.get<ChainPositions::LoCut>(), loCutCoefficients, chainSettings.loCutSlope);
+	updateCutFilter(monoChain.get<ChainPositions::HiCut>(), hiCutCoefficients, chainSettings.hiCutSlope);
+}
+
 void ResponseCurveComponent::paint(juce::Graphics& g)
 {
 	using namespace juce;
 
 	// (Our component is opaque, so we must completely fill the background with a solid colour)
-	g.fillAll(Colours::black);     // (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+	g.fillAll(Colours::black);    
 
-	auto responseArea = getLocalBounds();
+	g.drawImage(background, getLocalBounds().toFloat());
+
+	//auto responseArea = getLocalBounds();
+	auto responseArea = getAnalysisArea();  // getRenderArea();
+
 	auto w = responseArea.getWidth();
 
 	auto& locut = monoChain.get<ChainPositions::LoCut>();
@@ -291,7 +311,7 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
 	}
 
 	g.setColour(Colours::beige);
-	g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
+	g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
 
 	g.setColour(Colours::white);
 
@@ -303,8 +323,88 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
 }
 
 
+void ResponseCurveComponent::resized()
+{
+	//using namespace juce;
+
+	background = juce::Image(juce::Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+
+	juce::Graphics g(background);
+
+	juce::Array<float>  freqs
+	{
+		20,30,40,50,100,
+		200,300,400,500,1000,
+		2000,3000,4000,5000,10000,
+		20000
+	};
+
+	auto renderArea = getAnalysisArea();
+	auto left = renderArea.getX();
+	auto right = renderArea.getRight();
+	auto top = renderArea.getY();
+	auto bottom = renderArea.getBottom();
+	auto width = renderArea.getWidth();
+
+	juce::Array<float> xs;
+	for(auto f : freqs)
+	{
+       auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+	   xs.add(left + width * normX);
+	};
 
 
+	g.setColour(juce::Colours::dimgrey);
+	//for (auto f : freqs)
+    for(auto x : xs)
+	{
+		//auto normX = juce::mapFromLog10(f, 20.f, 20000.f);
+		//g.drawVerticalLine(getWidth()*normX, 0.f, getHeight());
+
+		g.drawVerticalLine(x, top, bottom);
+	}
+
+	juce::Array<float> gains
+	{
+	  -24, -12, 0, 12, 24
+	};
+
+	for (auto gDb : gains)
+	{
+		auto y = juce::jmap(gDb, -24.f, 24.f, float(bottom), float(top));
+		//g.drawHorizontalLine(y, 0.f, getWidth());
+		g.setColour(gDb == 0.f ? juce::Colours::orange : juce::Colours::darkgrey);
+		g.drawHorizontalLine(y, left, right);
+	}
+
+	//g.drawRect(getAnalysisArea());
+}
+
+
+juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
+{
+	auto bounds = getLocalBounds();
+
+	bounds.reduce(10.f /*JUCE_LIVE_CONSTANT(5)*/,    // важно что каждая на своей строке !!!
+		          8.f /*JUCE_LIVE_CONSTANT(5)*/);   // важно что каждая на своей строке !!!
+
+	bounds.removeFromTop(4);
+	bounds.removeFromBottom(4);
+
+	return bounds;
+}
+
+
+
+juce::Rectangle<int> ResponseCurveComponent::getAnalysisArea()
+{
+	auto bounds = getRenderArea();
+	bounds.removeFromTop(12);
+	bounds.removeFromBottom(2);
+	bounds.removeFromLeft(20);
+	bounds.removeFromRight(20);
+	return bounds;
+}
 
 
 
@@ -331,6 +431,24 @@ Simple_eqAudioProcessorEditor::Simple_eqAudioProcessorEditor (Simple_eqAudioProc
 	peakFreqSlider.labels.add({ 0.f, "20Hz" });
 	peakFreqSlider.labels.add({ 1.f, "20kHz" });
 
+	peakGainSlider.labels.add({ 0.f, "-24dB" });
+	peakGainSlider.labels.add({ 1.f, "+24dB" });
+
+	peakQSlider.labels.add({ 0.f, "0.1" });
+	peakQSlider.labels.add({ 1.f, "10.0" });
+
+	loCutFreqSlider.labels.add({ 0.f, "20Hz" });
+	loCutFreqSlider.labels.add({ 1.f, "20kHz" });
+
+	hiCutFreqSlider.labels.add({ 0.f, "20Hz" });
+	hiCutFreqSlider.labels.add({ 1.f, "20kHz" });
+
+	loCutSlopeSlider.labels.add({ 0.f, "12" });
+	loCutSlopeSlider.labels.add({ 1.f, "48" });
+
+	hiCutSlopeSlider.labels.add({ 0.f, "12" });
+	hiCutSlopeSlider.labels.add({ 1.f, "48" });
+
 	for (auto comp : getComps())
 	{
 		addAndMakeVisible(comp);
@@ -338,7 +456,7 @@ Simple_eqAudioProcessorEditor::Simple_eqAudioProcessorEditor (Simple_eqAudioProc
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (600, 400);
+    setSize (600, 480);
 }
 
 Simple_eqAudioProcessorEditor::~Simple_eqAudioProcessorEditor()
@@ -362,8 +480,11 @@ void Simple_eqAudioProcessorEditor::resized()
     // subcomponents in your editor..
 
 	auto bounds = getLocalBounds();
-	auto responseArea = bounds.removeFromTop(  bounds.getHeight() * 0.33 );
+	float hRatio = 37.f / 100.f;  //  JUCE_LIVE_CONSTANT(33) / 100.f;
+	auto responseArea = bounds.removeFromTop(  bounds.getHeight() * hRatio);
 	responseCurveComponent.setBounds(responseArea);
+
+	bounds.removeFromTop(5);
 
     auto loCutArea = bounds.removeFromLeft(  bounds.getWidth() * 0.33 );
 	auto hiCutArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
